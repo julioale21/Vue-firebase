@@ -2,6 +2,7 @@
 node_modules
 /dist
 .history
+firebase.js
 
 
 # local env files
