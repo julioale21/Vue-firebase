@@ -13,6 +13,19 @@ const mutations = {
 }
 
 const actions = {
+    getCurrentUser() {
+        return new Promise((resolve, reject) => {
+            const unsuscribe = auth.onAuthStateChanged(
+                user => {
+                    unsuscribe();
+                    resolve(user)
+                },
+                () => {
+                    reject();
+                }
+            );
+        });
+    },
     async doLoginAction({ commit }, { email, password }) {
         await auth.setPersistence(fb.auth.Auth.Persistence.SESSION);
         await auth.signInWithEmailAndPassword(email, password);

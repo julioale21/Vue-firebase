@@ -1,15 +1,19 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue';
-import AuthView from '../views/AuthView.vue'
+import RoomsView from '../views/RoomsView.vue';
+import AuthView from '../views/AuthView.vue';
+import store from '../store';
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'home',
-    component: Home
+    name: 'rooms',
+    component: RoomsView,
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/auth',
@@ -23,5 +27,17 @@ const router = new VueRouter({
   base: process.env.BASE_URL,
   routes
 })
+
+router.beforeEach( async (to, from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if(requiresAuth && !(await store.dispatch('user/getCurrentUser'))) {
+    next({ name: 'auth'})
+  } else if (!requiresAuth && (await store.dispatch('user/getCurrentUser'))) {
+    next({ name: 'home'})
+  } else {
+    next()
+  }
+}) 
 
 export default router

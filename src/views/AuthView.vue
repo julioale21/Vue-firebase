@@ -144,7 +144,7 @@ export default {
             this.userData.password = ''
         },
         redirect() {
-            this.$router.push({ name: 'home' });
+            this.$router.push({ name: 'rooms' });
         },
         async doRegister() {
             this.isLoading = true;
