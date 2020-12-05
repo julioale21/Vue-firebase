@@ -5,14 +5,22 @@
                 <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">
             </a>
 
-            <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+            <a 
+                @click.prevent="toggleNavBar"
+                role="button" 
+                class="navbar-burger burger" 
+                aria-label="menu" 
+                aria-expanded="false" 
+                data-target="navBar"
+                ref="burger"
+            >
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
             </a>
         </div>
 
-        <div id="navbarBasicExample" class="navbar-menu">
+        <div id="navBar" class="navbar-menu" ref="navBar">
             <div class="navbar-start">
                 <router-link class="navbar-item" to="/">
                     Home
@@ -25,14 +33,15 @@
             <div class="navbar-end">
                 <div class="navbar-item">
                     <div class="buttons">
-                        <router-link class="button is-primary" to="/">
-                            <strong>Profile</strong>
-                        </router-link>
+                        <template v-if="user">
+                            <router-link class="button is-primary" to="/">
+                                <strong>Profile</strong>
+                            </router-link>
 
-                        <a class="button is-light">
-                            Log out
-                        </a>
-
+                            <a @click="doLogout" class="button is-light">
+                                Log out
+                            </a>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -41,8 +50,40 @@
 </template>
 
 <script>
-    export default {
-        name: 'NavBarComponent'
-        
+import { mapState, mapActions } from "vuex";
+export default {
+    name: 'NavBarComponent',
+    mounted() {
+        this.burger = this.$refs.burger;
+        this.navBar = this.$refs.navBar;
+    },
+    data() {
+        return {
+            burger: null,
+            navBar: null
+        }
+    },
+    computed: {
+        ...mapState('user', ['user'])
+    },
+    methods: {
+        ...mapActions('user', ['doLogoutAction']),
+        toggleNavBar() {
+            this.burger.classList.toggle('is-active');
+            this.navBar.classList.toggle('is-active')
+        },
+        async doLogout() {
+            try {
+                await this.doLogoutAction();
+                this.$toast.success('Logged out');
+                this.$router.push({ name: 'auth' });
+            } catch (error) {
+                this.$toast.error(error.message);
+                console.log(error);
+            }
+        }
     }
+    
+}
 </script>
+
