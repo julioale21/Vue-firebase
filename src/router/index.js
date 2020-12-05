@@ -34,7 +34,7 @@ router.beforeEach( async (to, from, next) => {
   if(requiresAuth && !(await store.dispatch('user/getCurrentUser'))) {
     next({ name: 'auth'})
   } else if (!requiresAuth && (await store.dispatch('user/getCurrentUser'))) {
-    next({ name: 'home'})
+    next({ name: 'rooms'})
   } else {
     next()
   }
