@@ -26,6 +26,25 @@ const actions = {
             );
         });
     },
+    async updateProfileAction({ commit }, { name, email, password }) {
+        const user = auth.currentUser;
+
+        if(name) {
+            await user.updateProfile({
+                displayName: name
+            });
+        }
+
+        if(email) {
+            await user.updateEmail(email);
+        }
+
+        if(password) {
+            await user.updatePassword(password);
+        }
+
+        commit('setUser', user);
+    },
     async doLoginAction({ commit }, { email, password }) {
         await auth.setPersistence(fb.auth.Auth.Persistence.SESSION);
         await auth.signInWithEmailAndPassword(email, password);
@@ -43,6 +62,9 @@ const actions = {
     async doLogoutAction({ commit }) {
         await auth.signOut();
         commit('setUser', null);
+    },
+    async doResetAction(context, email) {
+        await auth.sendPasswordResetEmail(email);
     }
 }
 
