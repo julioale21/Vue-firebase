@@ -42,7 +42,13 @@
                             </div>
 
                             <div class="control">
-                                <button class="button is-danger">Delete</button>
+                                <button 
+                                    @click="removeRoom"
+                                    type="button"
+                                    class="button is-danger"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -78,10 +84,9 @@ export default {
         }
     },
     methods: {
-        ...mapActions('rooms', ['updateRoomAction', 'getRoomAction']),
+        ...mapActions('rooms', ['updateRoomAction', 'getRoomAction', 'removeRoomAction']),
         async updateRoom() {
-            this.isLoading = true;
-                
+            this.isLoading = true;   
             try {
                 await this.updateRoomAction({
                     roomID: this.id,
@@ -93,8 +98,21 @@ export default {
                 console.log(error);
                 this.$toast.error(error.message);
             } finally {
-                this.isLoading = false;
-                
+                this.isLoading = false; 
+            }
+        },
+        async removeRoom() {
+            try {
+                await this.$store.dispatch('utils/requestConfirmation', {
+                    props: { message: 'Remove Room?'},
+                    component: 'ConfirmationModal'
+                });
+                this.removeRoomAction(this.id);
+                this.$toast.success('Room removed');
+                this.$router.push({ name: 'rooms'});
+            } catch (error) {
+                console.error(error.message);
+                this.$toast.error(error.message);
             }
         }
     },

@@ -1,4 +1,4 @@
-import { auth, fb } from "../firebase";
+import { auth, fb, db } from "../firebase";
 
 const state = {
     user: null
@@ -30,13 +30,36 @@ const actions = {
             );
         });
     },
-    async updateProfileAction({ commit }, { name, email, password }) {
+    async updateProfileAction({ commit, state }, { name, email, password }) {
         const user = auth.currentUser;
 
         if(name) {
             await user.updateProfile({
                 displayName: name
             });
+
+            db.runTransaction(async transaction => {
+                const query = await db
+                    .collectionGroup('messages')
+                    .where('userId', "==", state.user.uid)
+                    .get();
+
+                query.forEach(doc => {
+                    transaction.update(doc.ref, { userName: name});
+                });
+            });
+
+            db.runTransaction(async transaction => {
+                const query = await db
+                    .collection('rooms')
+                    .where('adminUid', '==', state.user.uid)
+                    .get();
+
+                query.forEach(doc => {
+                    transaction.update(doc.ref, { adminName: name })
+                });
+            });
+           
         }
 
         if(email) {
