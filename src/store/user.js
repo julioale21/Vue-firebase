@@ -1,7 +1,9 @@
 import { auth, fb, db } from "../firebase";
 
 const state = {
-    user: null
+    user: null,
+    meta: {},
+    userListener: () => {}
 }
 
 const getters = {
@@ -13,6 +15,16 @@ const getters = {
 const mutations = {
     setUser(state, user) {
         state.user = user;
+    },
+    setMeta(state, meta) {
+        state.meta = meta;
+    },
+    setUserListener(state, listener) {
+        if (listener) {
+            state.userListener = listener;
+        } else {
+            state.userListener();
+        }
     }
 }
 
@@ -30,6 +42,22 @@ const actions = {
             );
         });
     },
+
+    async updateMetaAction(context, { roomID, exit, uid }) {
+        const ref = db.collection('users').doc(uid);
+        const userDoc = await ref.get();
+
+        if (!userDoc) {
+            await ref.set({});
+        }
+
+        const method = exit ? 'arrayRemove' : 'arrayUnion';
+        await ref
+            .update({
+                connected: fb.firestore.FieldValue[method](roomID)
+        })
+    },
+
     async updateProfileAction({ commit, state }, { name, email, password }) {
         const user = auth.currentUser;
 

@@ -65,9 +65,15 @@ dayjs.extend(relativeTime);
 export default {
     name: 'ViewRoom',
     async created() {
+        this.userUid = this.$store.state.user.user.uid;
         try {
             this.room = await this.$store.dispatch('rooms/getRoomAction', this.id);
-            await this.$store.dispatch('messages/getMessages', this.id)
+            await this.$store.dispatch('messages/getMessages', this.id);
+            this.updateMetaAction({
+                roomID: this.id,
+                exit: false,
+                uid: this.userUid
+            });
         } catch (error) {
             console.error(error.message);
             this.$toast.error(error.message);
@@ -76,6 +82,11 @@ export default {
     },
     destroyed() {
         this.$store.commit('messages/setMessagesListener', null);
+        this.updateMetaAction({
+            roomID: this.id,
+            exit: true,
+            uid: this.userUid
+        });
     },
     props: {
         id: {
@@ -89,12 +100,14 @@ export default {
     data() {
         return {
             isLoading: false,
+            userUid: null,
             message: '',
             room: null
         }
     },
     methods: {
         ...mapActions('messages', ['createMessageAction']),
+        ...mapActions('user', ['updateMetaAction']),
         scrollDown() {
             const messages = this.$refs.messages;
             this.$nextTick(() => {
