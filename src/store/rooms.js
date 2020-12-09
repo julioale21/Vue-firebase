@@ -74,11 +74,20 @@ const actions = {
 
         }
     },
-    async getRoomAction(context, roomId) {
-        return await db
-            .collection('rooms')
-            .doc(roomId)
-            .get();
+    async getRoomAction({ getters }, roomID) {
+        let room = getters['getRoom'](roomID);
+
+        if (!room) {
+            room = await db
+                .collection('rooms')
+                .doc(roomID)
+                .get();
+
+            if (!room.exists) throw new Error('Could not find room');
+            room = room.data();
+        }
+
+        return room;
     },
     async updateRoomAction(context, { roomID, name, description }) {
         const roomData = {};

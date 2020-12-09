@@ -58,13 +58,7 @@ export default {
     name: 'UpdateRoom',
     async created() {
         try {
-            let room = this.$store.getters['rooms/getRoom'](this.id);
-            if(!room) {
-                room = await this.getRoomAction(this.id);
-                if(!room.exists) throw new Error("Could not find room");
-                room = room.data();
-            }
-            this.room = room;
+            this.room = await this.getRoomAction(this.id);
         } catch (error) {
             console.error(error);
             this.$toast.error(error.message);
