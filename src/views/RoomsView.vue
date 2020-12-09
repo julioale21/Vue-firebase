@@ -1,55 +1,27 @@
 <template>
-  <div class="home">
-      <div class="section">
-        <div class="container">
-          <template v-if="!user">
-            <h1>Home</h1>
-            <button 
-              class="button is-primary"
-              @click="loginWithGoogle"
-            >Login with Google</button>  
-          </template>
-          <template v-else>
-            <h1>Hi {{user.displayName}}</h1>
-            <button
-              class="button is-primary"
-              @click="logout"
-            >Logout</button>
-          </template>
-        </div>
-      </div>
+  <div class="section">
+    <div class="container">
+      <h1 class="title has-text-centered">Rooms</h1>
+      <rooms-component :rooms="rooms"/>      
+    </div>
   </div>
 </template>
 
 <script>
+//import RoomsComponent from '../components/RoomsComponent.vue';
+const RoomsComponent = () => import('../components/RoomsComponent.vue');
 
-import {fb, auth} from '../firebase';
+import { mapState } from "vuex";
+import { db } from '../firebase';
 
 export default {
+    
   name: 'RoomsView',
-  data() {
-    return {
-      user: null
-    }
+  components: { 
+    RoomsComponent 
   },
-  methods: {
-    async loginWithGoogle() {
-      try {
-        var provider = new fb.auth.GoogleAuthProvider();
-        const { user } = await auth.signInWithPopup(provider);
-        this.user = user;
-      } catch (error) {
-        console.log(error.message)
-      } 
-    },
-    async logout() {
-      try {
-        await auth.signOut();
-        this.user = null;
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  },
+  computed: {
+    ...mapState('rooms', ['rooms']),
+  }
 }
 </script>

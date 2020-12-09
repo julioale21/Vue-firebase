@@ -1,8 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import RoomsView from '../views/RoomsView.vue';
-import AuthView from '../views/AuthView.vue';
-import UserProfileView from '../views/UserProfileView.vue';
+const RoomsView = () => import ('../views/RoomsView.vue');
+const AuthView = () => import('../views/AuthView.vue');
+const UserProfileView = () => import('../views/UserProfileView.vue');
+const CreateRoom = () => import('../views/CreateRoom.vue');
+const UpdateRoom = () => import('../views/UpdateRoom.vue');
+const ViewRoom = () => import('../views/ViewRoom.vue');
 import store from '../store';
 
 Vue.use(VueRouter)
@@ -28,7 +31,34 @@ const routes = [
     meta: {
       requiresAuth: true
     }
+  },
+  {
+    path: '/create',
+    name: 'createRoom',
+    component: CreateRoom,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/update/:id',
+    props: true,
+    name: 'update',
+    component: UpdateRoom,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/view/:id',
+    props: true,
+    name: 'view',
+    component: ViewRoom,
+    meta: {
+      requiresAuth: true
+    }
   }
+
 ]
 
 const router = new VueRouter({
