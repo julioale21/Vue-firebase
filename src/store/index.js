@@ -23,9 +23,9 @@ const store = new Vuex.Store({
         if(user) {
           commit('user/setUser', user);
           try {
-            //await dispatch('user/getMetaAction');
+            await dispatch('user/getMetaAction');
             await dispatch('rooms/getRoomsAction');
-            //await dispatch('messages/getMessagesAction');
+            await dispatch('messages/getMessagesAction');
           } catch (error) {
             console.error(error.message);
             this.$toast.error(error.message);
