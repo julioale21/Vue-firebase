@@ -47,15 +47,28 @@ const actions = {
         const ref = db.collection('users').doc(uid);
         const userDoc = await ref.get();
 
-        if (!userDoc) {
-            await ref.set({});
-        }
+        if (!userDoc.exists) await ref.set({});
 
         const method = exit ? 'arrayRemove' : 'arrayUnion';
-        await ref
-            .update({
-                connected: fb.firestore.FieldValue[method](roomID)
+
+        await ref.update({
+            connected: fb.firestore.FieldValue[method](roomID),
+            [`joined.${roomID}`]: Date.now()
         })
+    },
+
+    async getMetaAction({state, commit}) {
+        const ref = db.collection('users').doc(state.user.uid);
+
+        await ref.update({ connected: []});
+
+        const query = ref.onSnapshot(doSnapshot);
+
+        commit('setUserListener', query);
+
+        function doSnapshot(doc) {
+            commit('setMeta', doc.data());
+        }
     },
 
     async updateProfileAction({ commit, state }, { name, email, password }) {

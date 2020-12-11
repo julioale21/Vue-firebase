@@ -7,7 +7,7 @@
                         <h1 class="title has-text-centered">{{ room.name }}</h1>
                         <div class="messages content" ref="messages">
                             <div 
-                                v-for="message in messages"
+                                v-for="message in roomMessages"
                                 :key="message.id"
                                 class="message"
                                 :class="{
@@ -68,7 +68,6 @@ export default {
         this.userUid = this.$store.state.user.user.uid;
         try {
             this.room = await this.$store.dispatch('rooms/getRoomAction', this.id);
-            await this.$store.dispatch('messages/getMessages', this.id);
             this.updateMetaAction({
                 roomID: this.id,
                 exit: false,
@@ -81,7 +80,6 @@ export default {
         }
     },
     destroyed() {
-        this.$store.commit('messages/setMessagesListener', null);
         this.updateMetaAction({
             roomID: this.id,
             exit: true,
@@ -96,6 +94,9 @@ export default {
     },
     computed: {
         ...mapState('messages', ['messages']),
+        roomMessages() {
+            return this.messages.filter(message => message.roomId === this.id);
+        }
     },
     data() {
         return {

@@ -18,7 +18,7 @@ const mutations = {
     },
     createRoom(state, { roomData, id }) {
         roomData.id = id;
-        state.rooms.unshift(roomData);
+        state.rooms.push(roomData);
     },
     updateRoom(state, { index, roomData, id}) {
         roomData.id = id;
@@ -128,6 +128,11 @@ const actions = {
 const getters = {
     getRoom: state => id => {
         return state.rooms.find(room => room.id === id);
+    },
+    roomsByDate: state => {
+        return state.rooms.sort(function(a, b) {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        })
     }
 }
 
