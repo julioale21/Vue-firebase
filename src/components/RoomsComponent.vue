@@ -15,14 +15,10 @@
                         <div v-if="hasUnreadMessages(room.id).length" class="unread-alert">
                             {{ hasUnreadMessages(room.id).length }} unread messages 
                         </div>
-                        <div class="card-image">
-                            <figure class="image is-16by9">
-                                <img 
-                                src="https://bulma.io/images/placeholders/1280x960.png" 
-                                alt="Placeholder image"
-                                />
-                            </figure>
-                        </div>
+                        <div 
+                            class="card-image room_image" 
+                            :style="{ 'background-image': `url(${getRoomImage(room.id)})`}"
+                        ></div>
 
                         <div class="card-content">
                             <div class="media">
@@ -68,6 +64,10 @@ export default {
         ...mapState(['isLoading']),
     },
     methods: {
+        getRoomImage(roomID) {
+            const room = this.rooms.find(room => room.id === roomID);
+            return room.image ? room.image : require('@/assets/img/default-image.jpg')
+        },
         hasUnreadMessages(roomId) {
             return this.unreadMessages.filter(message => {
                 return message.roomId === roomId;
@@ -92,7 +92,14 @@ export default {
             padding: 1rem;
             z-index: 2;
         }
+
+        &_image {
+            height: 15vmax;
+            background-size: cover;
+            background-position: center;
+        }
     }
+
 
     @keyframes slidein {
         from {

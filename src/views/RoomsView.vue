@@ -12,7 +12,7 @@
 const RoomsComponent = () => import('../components/RoomsComponent.vue');
 
 import { mapState, mapGetters } from "vuex";
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 
 export default {
     

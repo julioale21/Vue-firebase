@@ -1,4 +1,4 @@
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 
 const state = {
     rooms: [],
@@ -30,15 +30,39 @@ const mutations = {
 }
 
 const actions = {
-    async createRoomAction({ rootState }, { name, description }) {
-        await db.collection('rooms').add({
+    getNewRoomId() {
+        return db.collection('rooms').doc();
+    },
+
+    async uploadRoomImage(context, { roomID, file }) {
+        const uploadPhoto = () => {
+            let fileName = `rooms/${roomID}/${roomID}-image.jpg`;
+            return storage.ref(fileName).put(file);
+        };
+
+        function getDownloadURL(ref) {
+            return ref.getDownloadURL();
+        }
+
+        try {
+            let upload = await uploadPhoto();
+            return await getDownloadURL(upload.ref);
+        } catch (error) {
+            throw Error(error.message);
+        }
+    },
+
+    async createRoomAction({ rootState }, { name, description, image, roomID }) {
+        await db.collection('rooms').doc(roomID).set({
             name,
             description,
             createdAt: Date.now(),
             adminUid: rootState.user.user.uid,
-            adminName: rootState.user.user.displayName
-        })
+            adminName: rootState.user.user.displayName,
+            image
+        });
     },
+
     async getRoomsAction({ commit }) {
         const query = db.collection('rooms')
             .orderBy('createdAt', 'desc')
@@ -74,6 +98,7 @@ const actions = {
 
         }
     },
+
     async getRoomAction({ getters }, roomID) {
         let room = getters['getRoom'](roomID);
 
@@ -89,18 +114,22 @@ const actions = {
 
         return room;
     },
-    async updateRoomAction(context, { roomID, name, description }) {
+
+    async updateRoomAction(context, { roomID, name, description, image }) {
         const roomData = {};
 
         if (name) roomData.name = name;
 
         if (description) roomData.description = description;
 
+        roomData.image = image;
+
         await db
             .collection('rooms')
             .doc(roomID)
             .update(roomData);
     },
+
     async removeRoomAction(context, roomID) {
         const room = db
             .collection('rooms')

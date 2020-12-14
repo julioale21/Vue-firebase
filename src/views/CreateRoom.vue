@@ -30,6 +30,40 @@
                             </div>
                         </div>
 
+                        <div class="field">
+                            <label class="label">Image</label>
+                            <div class="control">
+                                <div 
+                                    class="room_image"
+                                    :style="{
+                                        'background-image': `url(${roomImage})`
+                                    }"
+                                >
+                                    <a 
+                                        href="#"
+                                        v-if="image"
+                                        @click.prevent="image = roomData.imageURL = null"
+                                        class="is-pulled-right button is-small is-danger is-outlined"
+                                    >X</a>
+                                </div>
+                                <div class="file">
+                                    <label class="file-label">
+                                        <input 
+                                            type="file" 
+                                            class="file-input"
+                                            @change="onFileChange"
+                                            ref="file"
+                                        />
+                                        <span class="file-cta">
+                                            <span class="file-label">
+                                                Choose a image
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="field has-text-right">
                             <div class="control">
                                 <button 
@@ -57,24 +91,51 @@ export default {
     data() {
         return {
             isLoading: false,
+            image: null,
             roomData: {
                 name: '',
-                description: ''
+                description: '',
+                imageURL: ''
             }
         }
     },
+    computed: {
+        roomImage() {
+            return this.image
+            ? URL.createObjectURL(this.image)
+            : require('@/assets/img/default-image.jpg');
+        }
+    },
     methods: {
-        ...mapActions('rooms', ['createRoomAction']),
+        ...mapActions('rooms', ['createRoomAction', 'getNewRoomId', 'uploadRoomImage']),
+
+        onFileChange() {
+            this.image = event.target.files[0];
+            this.$refs.file.value = null;
+        },
+
         async createRoom() {
             this.isLoading = true;
 
             try {
+                const newRoom = await this.getNewRoomId();
+                const roomID = newRoom.id;
+
+                if(this.image) {
+                    this.imageURL = await this.uploadRoomImage({
+                        roomID,
+                        file: this.image
+                    });
+                }
+
                 await this.createRoomAction({
                     name: this.roomData.name,
-                    description: this.roomData.description
+                    description: this.roomData.description,
+                    image: this.imageURL,
+                    roomID
                 })
                 this.$toast.success('Room successfuly created');
-                this.roomData.name = this.roomData.description = '';
+                this.roomData.name = this.roomData.description = this.imageURL = '';
                 setTimeout(() => {
                     this.$router.push({ name: 'rooms'})
                 }, 1000);
@@ -89,6 +150,13 @@ export default {
 }
 </script>
 
-<style>
-
+<style lang="scss" scoped>
+.room_image {
+    height: 20vmax;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 1px solid;
+    background-size: cover;
+    background-position: center;
+}
 </style>
