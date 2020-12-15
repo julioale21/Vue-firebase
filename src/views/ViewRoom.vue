@@ -121,6 +121,28 @@ dayjs.extend(relativeTime);
 
 export default {
     name: 'ViewRoom',
+
+    data() {
+        return {
+            audio: null,
+            audioURL: null,
+            filter: null,
+            isLoading: false,
+            photo: null,
+            photoURL: null,
+            message: '',
+            room: null,
+            userUid: null, 
+        }
+    },
+
+    props: {
+        id: {
+            type: String,
+            required: true
+        }
+    },
+
     async created() {
         this.userUid = this.$store.state.user.user.uid;
         try {
@@ -136,6 +158,7 @@ export default {
             this.$router.push({ name: 'rooms'});
         }
     },
+
     destroyed() {
         this.updateMetaAction({
             roomID: this.id,
@@ -143,40 +166,34 @@ export default {
             uid: this.userUid
         });
     },
-    props: {
-        id: {
-            type: String,
-            required: true
-        }
-    },
+
     computed: {
         ...mapState('messages', ['messages']),
+
         roomMessages() {
             return this.messages.filter(message => message.roomId === this.id);
         },
+
         messagePhoto() {
             return URL.createObjectURL(this.photo);
         },
+
         messageAudio() {
             return URL.createObjectURL(this.audio);
         }
     },
-    data() {
-        return {
-            audio: null,
-            audioURL: null,
-            filter: null,
-            isLoading: false,
-            photo: null,
-            photoURL: null,
-            message: '',
-            room: null,
-            userUid: null, 
-        }
-    },
+    
     methods: {
-        ...mapActions('messages', ['createMessageAction', 'uploadMessageFile']),
+        ...mapActions('messages', [
+                'createMessageAction',
+                'uploadMessageFile',
+                'deleteFile',
+                'deleteMessage']),
+
         ...mapActions('user', ['updateMetaAction']),
+
+        ...mapActions('utils', ['requestConfirmation']),
+
         scrollDown() {
             const messages = this.$refs.messages;
             this.$nextTick(() => {
@@ -187,6 +204,7 @@ export default {
                 });
             });
         },
+
         async createMessage() {
             this.isLoading = true;
             try {
@@ -223,6 +241,7 @@ export default {
                 this.isLoading = false;
             }
         },
+
         async onFileChange(event) {
             this.photo = event.target.files[0];
             this.$refs.file.value = null;
@@ -241,6 +260,7 @@ export default {
                 this.$toast.error(error.message);
             }
         },
+
         async recordAudio() {
             try {
                 this.audio = await this.$store.dispatch('utils/requestConfirmation', {
@@ -250,6 +270,34 @@ export default {
                    component: 'RecordModal'
                 })
             } catch (error) {
+                this.$toast.error(error.message);
+            }
+        },
+
+        async deleteMessageAsync(messageID) {
+            try {
+                await this.requestConfirmation({
+                    props: { message: 'Delete message?' },
+                    component: 'ConfirmationModal'
+                });
+
+                const message = this.roomMessages.find(message => message.id === messageID);
+
+                if (message.photo) {
+                    await this.deleteFile(message.photo);
+                }
+
+                if (message.audio) {
+                    await this.deleteFile(message.audio);
+                }
+
+                await this.deleteMessage({
+                    roomID: this.id,
+                    messageID
+                });
+
+            } catch (error) {
+                console.error(error.message);
                 this.$toast.error(error.message);
             }
         }

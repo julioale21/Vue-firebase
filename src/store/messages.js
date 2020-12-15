@@ -60,6 +60,7 @@ const actions = {
             commit('setMessages', messages);
         }
     },
+
     async createMessageAction({ rootState }, { roomID, message, audio, photo, filter }) {
         await db.collection('rooms').doc(roomID).collection('messages').add({
             userId: rootState.user.user.uid,
@@ -72,6 +73,7 @@ const actions = {
             createdAt: Date.now()
         })
     },
+
     async uploadMessageFile({rootGetters}, { roomID, file, type }) {
         const timestamp = Date.now();
         const userUID = rootGetters['user/getUserUid'];
@@ -92,6 +94,20 @@ const actions = {
         } catch (error) {
             throw Error(error);
         }
+    },
+
+    async deleteFile(context, file) {
+        const fileRef = storage.refFromURL(file);
+        await fileRef.delete();
+    },
+
+    async deleteMessage(context, {roomID, messageID}) {
+        await db
+            .collection('rooms')
+            .doc(roomID)
+            .collection('messages')
+            .doc(messageID)
+            .delete();
     }
 }
 
