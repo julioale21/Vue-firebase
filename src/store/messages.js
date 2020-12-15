@@ -60,23 +60,25 @@ const actions = {
             commit('setMessages', messages);
         }
     },
-    async createMessageAction({ rootState }, { roomID, message, photo, filter }) {
+    async createMessageAction({ rootState }, { roomID, message, audio, photo, filter }) {
         await db.collection('rooms').doc(roomID).collection('messages').add({
             userId: rootState.user.user.uid,
             userName: rootState.user.user.displayName,
             roomId: roomID,
             message,
+            audio,
             photo,
             filter,
             createdAt: Date.now()
         })
     },
-    async uploadMessageFile({rootGetters}, { roomID, file }) {
+    async uploadMessageFile({rootGetters}, { roomID, file, type }) {
         const timestamp = Date.now();
         const userUID = rootGetters['user/getUserUid'];
 
+        const extension = type === 'photo' ? 'jpg' : 'wav';
         const uploadPhoto = () => {
-            let fileName = `rooms/${roomID}/messages/${userUID}-${timestamp}.jpg`;
+            let fileName = `rooms/${roomID}/messages/${userUID}-${timestamp}.${extension}`;
             return storage.ref(fileName).put(file);
         }
 

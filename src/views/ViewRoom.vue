@@ -23,6 +23,10 @@
                                     :style="{ 'background-image': `url(${message.photo})`}"
                                 ></div>
 
+                                <div v-if="message.audio" class="message_audio">
+                                    <audio :src="message.audio" controls>y</audio>
+                                </div>
+
                                 <p class="has-text-left">
                                     {{ message.message }}
                                     <span 
@@ -57,16 +61,32 @@
                     :style="{ 'background-image': `url(${messagePhoto})`}"
                 ></div>
 
+                <div v-if="audio" class="audio-preview">
+                    <a href="#" @click="audio = null" class="close">X</a>
+                    <audio :src="messageAudio" controls></audio>
+                </div>
+
+                <div class="control">
+                    <button 
+                        @click="recordAudio"
+                        :disabled="isLoading"
+                        type="button"
+                        class="button mr-1"
+                    >
+                        <i class="fas fa-microphone-alt"></i>
+                    </button>
+                </div>
+
                 <div class="control">
                     <button 
                         @click="$refs.file.click()"
                         :disabled="isLoading"
-                        class="button"
+                        class="button mr-1"
                         type="button"
-                        :class="{ 'is-loading': isLoading }"
                     >
-                        🌄
+                        <i class="fas fa-camera"></i>
                     </button>
+
                     <input 
                         @change="onFileChange"
                         ref="file"
@@ -78,7 +98,7 @@
 
                 <div class="control">
                     <button
-                        :disabled="!message"
+                        :disabled="!message && !photo"
                         type="submit"
                         class="button is-info"
                         :class="{ 'is-loading': isLoading }"
@@ -136,17 +156,22 @@ export default {
         },
         messagePhoto() {
             return URL.createObjectURL(this.photo);
+        },
+        messageAudio() {
+            return URL.createObjectURL(this.audio);
         }
     },
     data() {
         return {
+            audio: null,
+            audioURL: null,
+            filter: null,
             isLoading: false,
-            userUid: null,
             photo: null,
-            fileURL: null,
+            photoURL: null,
             message: '',
             room: null,
-            filter: null
+            userUid: null, 
         }
     },
     methods: {
@@ -166,20 +191,30 @@ export default {
             this.isLoading = true;
             try {
                 if (this.photo) {
-                    this.fileURL = await this.uploadMessageFile({
+                    this.photoURL = await this.uploadMessageFile({
                         roomID: this.id,
-                        file: this.photo
+                        file: this.photo,
+                        type: 'photo'
                     });
+                }
+
+                if (this.audio) {
+                    this.audioURL = await this.uploadMessageFile({
+                        roomID: this.id,
+                        file: this.audio,
+                        type: 'audio'
+                    })
                 }
 
                 await this.createMessageAction({
                     roomID: this.id,
                     message: this.message,
-                    photo: this.fileURL,
+                    photo: this.photoURL,
+                    audio: this.audioURL,
                     filter: this.filter
                 });
                 this.message ='';
-                this.photo = this.fileURL = this.filter = null;
+                this.photo = this.photoURL = this.audio = this.audioURL = this.filter = null;
                 this.scrollDown();
             } catch (error) {
                 console.error(error.message);
@@ -203,6 +238,18 @@ export default {
                 });
             } catch (error) {
                 console.error(error.message);
+                this.$toast.error(error.message);
+            }
+        },
+        async recordAudio() {
+            try {
+                this.audio = await this.$store.dispatch('utils/requestConfirmation', {
+                   props: {
+                       message: 'Record your message'
+                   },
+                   component: 'RecordModal'
+                })
+            } catch (error) {
                 this.$toast.error(error.message);
             }
         }
@@ -250,6 +297,23 @@ export default {
   bottom: 0;
   left: 0;
   width: 100%;
+}
+
+.audio-preview {
+    margin-right: 1rem;
+    cursor: pointer;
+    position: relative;
+    .close {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 1rem;
+        font-weight: bold;
+        background-color:black;
+        color: white;
+        text-decoration: none;
+        z-index: 1;
+    }
 }
 
 .photo-preview {
