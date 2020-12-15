@@ -100,7 +100,6 @@ const actions = {
                     transaction.update(doc.ref, { adminName: name })
                 });
             });
-           
         }
 
         if(email) {

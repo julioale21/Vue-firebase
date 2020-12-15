@@ -15,6 +15,14 @@
                                         message.userId === $store.getters['user/getUserUid']
                                 }"
                             >
+
+                                <div 
+                                    v-if="message.photo"
+                                    class="message_photo"
+                                    :class="message.filter"
+                                    :style="{ 'background-image': `url(${message.photo})`}"
+                                ></div>
+
                                 <p class="has-text-left">
                                     {{ message.message }}
                                     <span 
@@ -35,21 +43,48 @@
         <section class="send">
             <form @submit.prevent="createMessage" class="form">
                 <div class="control">
-                <textarea
-                    v-model="message"
-                    class="textarea form__textarea"
-                    placeholder="Write your message here..."
-                ></textarea>
+                    <textarea
+                        v-model="message"
+                        class="textarea form__textarea"
+                        placeholder="Write your message here..."
+                    ></textarea>
                 </div>
+
+                <div 
+                    v-if="photo"
+                    @click="photo = null"
+                    class="photo-preview"
+                    :style="{ 'background-image': `url(${messagePhoto})`}"
+                ></div>
+
                 <div class="control">
-                <button
-                    :disabled="!message"
-                    type="submit"
-                    class="button is-info"
-                    :class="{ 'is-loading': isLoading }"
-                >
-                    Send
-                </button>
+                    <button 
+                        @click="$refs.file.click()"
+                        :disabled="isLoading"
+                        class="button"
+                        type="button"
+                        :class="{ 'is-loading': isLoading }"
+                    >
+                        🌄
+                    </button>
+                    <input 
+                        @change="onFileChange"
+                        ref="file"
+                        type="file" 
+                        class="inputFile"
+                        style="display: none !important;"
+                    >
+                </div>
+
+                <div class="control">
+                    <button
+                        :disabled="!message"
+                        type="submit"
+                        class="button is-info"
+                        :class="{ 'is-loading': isLoading }"
+                    >
+                        Send
+                    </button>
                 </div>
             </form>
         </section>
@@ -58,10 +93,12 @@
 </template>
 
 <script>
+
 import { mapState, mapActions } from "vuex";
 const dayjs = require('dayjs');
 var relativeTime = require('dayjs/plugin/relativeTime');
 dayjs.extend(relativeTime);
+
 export default {
     name: 'ViewRoom',
     async created() {
@@ -96,18 +133,24 @@ export default {
         ...mapState('messages', ['messages']),
         roomMessages() {
             return this.messages.filter(message => message.roomId === this.id);
+        },
+        messagePhoto() {
+            return URL.createObjectURL(this.photo);
         }
     },
     data() {
         return {
             isLoading: false,
             userUid: null,
+            photo: null,
+            fileURL: null,
             message: '',
-            room: null
+            room: null,
+            filter: null
         }
     },
     methods: {
-        ...mapActions('messages', ['createMessageAction']),
+        ...mapActions('messages', ['createMessageAction', 'uploadMessageFile']),
         ...mapActions('user', ['updateMetaAction']),
         scrollDown() {
             const messages = this.$refs.messages;
@@ -122,11 +165,21 @@ export default {
         async createMessage() {
             this.isLoading = true;
             try {
+                if (this.photo) {
+                    this.fileURL = await this.uploadMessageFile({
+                        roomID: this.id,
+                        file: this.photo
+                    });
+                }
+
                 await this.createMessageAction({
                     roomID: this.id,
-                    message: this.message
+                    message: this.message,
+                    photo: this.fileURL,
+                    filter: this.filter
                 });
                 this.message ='';
+                this.photo = this.fileURL = this.filter = null;
                 this.scrollDown();
             } catch (error) {
                 console.error(error.message);
@@ -135,13 +188,31 @@ export default {
                 this.isLoading = false;
             }
         },
+        async onFileChange(event) {
+            this.photo = event.target.files[0];
+            this.$refs.file.value = null;
+
+            try {
+                this.filter = await this.$store.dispatch('utils/requestConfirmation',{
+                    props: {
+                        message: 'Select your filter',
+                        file: this.messagePhoto,
+                        filters: this.$store.state.messages.filters
+                    },
+                    component: 'FilterModal'
+                });
+            } catch (error) {
+                console.error(error.message);
+                this.$toast.error(error.message);
+            }
+        }
     },
     filters: {
         timeAgo(timestamp) {
             const date = new Date(timestamp);
             return dayjs().from(dayjs(date), true);
         }
-    }
+    } 
 }
 </script>
 
@@ -165,6 +236,11 @@ export default {
         color: gray;
         font-size: 12px;
     }
+    &_photo {
+        height: 20vmax;
+        background-size: cover;
+        background-position: center;
+    }
 }
 
 .send {
@@ -174,6 +250,17 @@ export default {
   bottom: 0;
   left: 0;
   width: 100%;
+}
+
+.photo-preview {
+    width: 5rem;
+    height: 5rem;
+    border: 1px solid;
+    background-position: center;
+    background-size: cover;
+    margin-right: 1rem;
+    border-radius: 1rem;
+    cursor: pointer;
 }
 
 .form {
