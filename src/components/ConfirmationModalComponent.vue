@@ -10,7 +10,7 @@
             <section class="modal-card-body">
                 <h3 class="subtitle has-text-centered">{{ message }}</h3>
             </section> 
-            <footer class="modal-card-foot buttons is-right">
+            <footer class="modal-card-footer buttons is-right">
                 <button @click="$emit('confirm')" class="button" :class="actionClass">
                     Confirm
                 </button>
